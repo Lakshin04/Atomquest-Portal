@@ -16,20 +16,20 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ----------------------------------------------------
-# 2. IN-MEMORY DATABASE
+# 2. IN-MEMORY DATABASE 
 # ----------------------------------------------------
 if 'goals_db' not in st.session_state:
     st.session_state.goals_db = pd.DataFrame([
         {
             "Goal_ID": "G001", "Emp_Name": "Lakshin", "Role": "Employee",
             "Thrust_Area": "Product Innovation", "Title": "Optimize Fan Motor Efficiency",
-            "UoM": "Min (Numeric / %)", "Target": 95.0, "Weightage": 40.0,
+            "UoM": "Min (Numeric / %)", "Target": 95.0, "Weightage": 20.0,
             "Status": "On Track", "Approval": "Pending", "Q1_Actual": 92.0, "Comment": ""
         },
         {
             "Goal_ID": "G002", "Emp_Name": "Lakshin", "Role": "Employee",
             "Thrust_Area": "Operations", "Title": "Reduce Assembly Line Waste",
-            "UoM": "Max (Numeric / %)", "Target": 5.0, "Weightage": 30.0,
+            "UoM": "Max (Numeric / %)", "Target": 5.0, "Weightage": 20.0,
             "Status": "Not Started", "Approval": "Pending", "Q1_Actual": 0.0, "Comment": ""
         },
         {
@@ -61,7 +61,7 @@ with st.sidebar:
     st.markdown("---")
     current_user_role = st.radio(
         "Select User Persona Journey:",
-        ["Employee View (Lakshin)", "Manager View (L1)", "HR / Admin Dashboard"]
+        ["Employee View", "Manager View (L1)", "HR / Admin Dashboard"]
     )
     st.markdown("---")
     st.info("💡 Tip: Use this radio selector to test end-to-end multi-role workflows.")
@@ -71,8 +71,8 @@ with st.sidebar:
 # ----------------------------------------------------
 
 # --- JOURNEY A: EMPLOYEE INTERFACE ---
-if current_user_role == "Employee View (Lakshin)":
-    st.markdown('<p class="brand-header">🎯 Employee Workspace</p>', unsafe_allow_html=True)
+if current_user_role == "Employee View":
+    st.markdown('<p class="brand-header">🎯 Employee Workspace: Lakshin</p>', unsafe_allow_html=True)
     st.markdown('<p class="brand-sub">Draft, align, and track your quarterly objectives.</p>', unsafe_allow_html=True)
     
     tab1, tab2 = st.tabs(["📝 Create & Submit Goals", "📈 Quarterly Progress"])
@@ -98,11 +98,14 @@ if current_user_role == "Employee View (Lakshin)":
                     new_row = {"Goal_ID": f"G00{len(st.session_state.goals_db)+1}", "Emp_Name": "Lakshin", "Role": "Employee", "Thrust_Area": thrust, "Title": title, "UoM": uom_type, "Target": target_val, "Weightage": weight, "Status": "Not Started", "Approval": "Pending", "Q1_Actual": 0.0, "Comment": ""}
                     st.session_state.goals_db = pd.concat([st.session_state.goals_db, pd.DataFrame([new_row])], ignore_index=True)
                     st.toast("Goal added successfully!", icon="✅")
+                    st.rerun()
 
         st.divider()
         st.subheader("Your Active Ledger")
         my_current_sheet = st.session_state.goals_db[st.session_state.goals_db['Emp_Name'] == "Lakshin"]
-        st.dataframe(my_current_sheet, use_container_width=True)
+        
+        clean_display_sheet = my_current_sheet[['Goal_ID', 'Thrust_Area', 'Title', 'UoM', 'Target', 'Weightage', 'Status', 'Approval']]
+        st.dataframe(clean_display_sheet, use_container_width=True, hide_index=True)
         
         total_allocated_weight = my_current_sheet['Weightage'].sum()
         st.metric(label="Total Weightage Allocation", value=f"{total_allocated_weight}%")
@@ -110,8 +113,9 @@ if current_user_role == "Employee View (Lakshin)":
         if total_allocated_weight == 100.0:
             if st.button("Submit Final Goal Sheet", type="primary"):
                 st.session_state.goals_db.loc[st.session_state.goals_db['Emp_Name'] == "Lakshin", "Approval"] = "Submitted"
-                st.balloons() # UI Polish: Celebration animation
+                st.balloons() 
                 st.success("🚀 Sheet submitted securely to manager.")
+                st.rerun()
         else:
             st.warning("⚠️ Complete allocation to exactly 100% to submit.")
 
@@ -122,13 +126,16 @@ if current_user_role == "Employee View (Lakshin)":
             with st.container(border=True):
                 st.markdown(f"**{row['Title']}** ({row['Thrust_Area']})")
                 c1, c2, c3 = st.columns(3)
-                with c1: new_status = st.selectbox(f"Status", ["Not Started", "On Track", "Completed"], key=f"stat_{index}")
+                with c1: new_status = st.selectbox(f"Status", ["Not Started", "On Track", "Completed"], key=f"stat_{index}", index=["Not Started", "On Track", "Completed"].index(row['Status']))
                 with c2: new_act = st.number_input(f"Actual (Target: {row['Target']})", value=float(row['Q1_Actual']), key=f"act_{index}")
                 with c3: 
                     calc_score = calculate_progress_score(row['UoM'], row['Target'], new_act)
                     st.metric("Computed Score", f"{calc_score:.1f}%")
-                st.session_state.goals_db.at[index, 'Status'] = new_status
-                st.session_state.goals_db.at[index, 'Q1_Actual'] = new_act
+                
+                # Dynamic state updating tracking
+                if new_status != row['Status'] or new_act != row['Q1_Actual']:
+                    st.session_state.goals_db.at[index, 'Status'] = new_status
+                    st.session_state.goals_db.at[index, 'Q1_Actual'] = new_act
 
 # --- JOURNEY B: MANAGER (L1) WORKSPACE ---
 elif current_user_role == "Manager View (L1)":
@@ -151,14 +158,17 @@ elif current_user_role == "Manager View (L1)":
                             st.session_state.goals_db.at[index, 'Approval'] = "Approved"
                             st.session_state.goals_db.at[index, 'Comment'] = comment_text
                             st.toast("Goal locked and approved.", icon="🔒")
+                            st.rerun() # Instantly refreshes list state on click
                     with col_btn2:
                         if st.button("Return for Rework", key=f"rej_{index}"):
                             st.session_state.goals_db.at[index, 'Approval'] = "Pending"
                             st.toast("Returned to employee.", icon="↩️")
+                            st.rerun() # Instantly refreshes list state on click
 
     with mgr_tab2:
-        active_goals = st.session_state.goals_db[st.session_state.goals_db['Approval'] == "Approved"]
-        if active_goals.empty: st.info("No approved goals available for review.")
+        # Check-in queue shows active approved goals that still need feedback notes
+        active_goals = st.session_state.goals_db[(st.session_state.goals_db['Approval'] == "Approved") & (st.session_state.goals_db['Comment'] == "")]
+        if active_goals.empty: st.info("✨ Complete: All approved goals have been finalized with structured check-in notes.")
         else:
             for index, row in active_goals.iterrows():
                 with st.container(border=True):
@@ -168,10 +178,14 @@ elif current_user_role == "Manager View (L1)":
                     c1.metric("Target", f"{row['Target']} {row['UoM'][:3]}")
                     c2.metric("Logged Actual", row['Q1_Actual'])
                     c3.metric("Score", f"{current_score:.1f}%")
-                    checkin_comment = st.text_area("Feedback", value=row.get('Comment', ''), key=f"chk_com_{index}")
-                    if st.button("Save Review", key=f"save_chk_{index}"):
-                        st.session_state.goals_db.at[index, 'Comment'] = checkin_comment
-                        st.toast("Check-in saved.", icon="💾")
+                    checkin_comment = st.text_area("Feedback Note (Required to clear)", value="", key=f"chk_com_{index}")
+                    if st.button("Save Review", key=f"save_chk_{index}", type="primary"):
+                        if not checkin_comment.strip():
+                            st.warning("⚠️ Feedback comments cannot be completely empty.")
+                        else:
+                            st.session_state.goals_db.at[index, 'Comment'] = checkin_comment
+                            st.toast("Check-in logged and saved successfully.", icon="💾")
+                            st.rerun() # Forces the card to immediately drop off the pending feedback array list
 
 # --- JOURNEY C: HR / ADMIN ENGINE ---
 else:
@@ -186,19 +200,18 @@ else:
         completed_reviews = len(st.session_state.goals_db[st.session_state.goals_db['Comment'] != ""])
         completion_rate = (completed_reviews / total_goals) * 100 if total_goals > 0 else 0.0
         
-        # UI Polish: Using Columns and Metrics for a dashboard feel
         dash_c1, dash_c2, dash_c3 = st.columns(3)
         dash_c1.metric("Total Goals Tracked", total_goals)
         dash_c2.metric("Check-ins Finalized", completed_reviews)
         dash_c3.metric("Org Completion Rate", f"{completion_rate:.1f}%")
         
         st.progress(completion_rate / 100)
-        st.dataframe(st.session_state.goals_db[['Emp_Name', 'Title', 'Status', 'Approval']], use_container_width=True)
+        st.dataframe(st.session_state.goals_db[['Emp_Name', 'Title', 'Status', 'Approval', 'Comment']], use_container_width=True, hide_index=True)
         
     with hr_tab2:
         c_m1, c_m2 = st.columns(2)
         with c_m1:
-            fig1 = px.pie(st.session_state.goals_db, names='Thrust_Area', title='Goals by Thrust Area', hole=0.4) # UI Polish: Donut chart
+            fig1 = px.pie(st.session_state.goals_db, names='Thrust_Area', title='Goals by Thrust Area', hole=0.4) 
             st.plotly_chart(fig1, use_container_width=True)
         with c_m2:
             fig2 = px.histogram(st.session_state.goals_db, x='Status', color='Status', title='Status Distribution')
