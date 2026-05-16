@@ -12,19 +12,19 @@ st.set_page_config(page_title="Atomberg Goal Portal", layout="wide")
 if 'goals_db' not in st.session_state:
     st.session_state.goals_db = pd.DataFrame([
         {
-            "Goal_ID": "G001", "Emp_Name": "Suriya SM", "Role": "Employee",
+            "Goal_ID": "G001", "Emp_Name": "Lakshin SK", "Role": "Employee",
             "Thrust_Area": "Product Innovation", "Title": "Optimize Fan Motor Efficiency",
             "UoM": "Min (Numeric / %)", "Target": 95.0, "Weightage": 40.0,
             "Status": "On Track", "Approval": "Pending", "Q1_Actual": 92.0, "Comment": ""
         },
         {
-            "Goal_ID": "G002", "Emp_Name": "Suriya SM", "Role": "Employee",
+            "Goal_ID": "G002", "Emp_Name": "Lakshin SK", "Role": "Employee",
             "Thrust_Area": "Operations", "Title": "Reduce Assembly Line Waste",
             "UoM": "Max (Numeric / %)", "Target": 5.0, "Weightage": 30.0,
             "Status": "Not Started", "Approval": "Pending", "Q1_Actual": 0.0, "Comment": ""
         },
         {
-            "Goal_ID": "G003", "Emp_Name": "Suriya SM", "Role": "Employee",
+            "Goal_ID": "G003", "Emp_Name": "Lakshin SK", "Role": "Employee",
             "Thrust_Area": "Safety", "Title": "Zero Factory Incidents",
             "UoM": "Zero", "Target": 0.0, "Weightage": 30.0,
             "Status": "Completed", "Approval": "Pending", "Q1_Actual": 0.0, "Comment": ""
