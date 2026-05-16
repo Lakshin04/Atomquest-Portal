@@ -45,12 +45,30 @@ if 'audit_logs' not in st.session_state:
 
 def calculate_progress_score(uom, target, actual):
     try:
-        if uom == "Min (Numeric / %)": return (actual / target) * 100 if target != 0 else 0.0
-        elif uom == "Max (Numeric / %)": return (target / actual) * 100 if actual != 0 else 0.0
-        elif uom == "Zero": return 100.0 if actual == 0 else 0.0
-        elif uom == "Timeline": return 100.0 if actual <= target else 50.0
-    except ZeroDivisionError: return 0.0
-    return 0.0
+        # 1. HIGHER IS BETTER (e.g., Efficiency, Sales)
+        if uom == "Min (Numeric / %)": 
+            if target == 0: return 0.0
+            score = (actual / target) * 100
+            
+        # 2. LOWER IS BETTER (e.g., Waste, Errors)
+        elif uom == "Max (Numeric / %)":
+            if actual == 0: return 100.0 
+            if target == 0: return 0.0
+            score = (target / actual) * 100
+            
+        # 3. ABSOLUTE ZERO GOALS
+        elif uom == "Zero": 
+            score = 100.0 if actual == 0 else 0.0
+            
+        # 4. BINARY TIMELINES
+        elif uom == "Timeline": 
+            score = 100.0 if actual <= target else 50.0
+        
+        # THE ENTERPRISE GUARDRAIL: Cap the max score at 100%, Floor at 0%
+        return max(0.0, min(score, 100.0))
+        
+    except Exception:
+        return 0.0
 
 # ----------------------------------------------------
 # 3. INTERFACE - NAVIGATION SIDEBAR
@@ -142,12 +160,12 @@ if current_user_role == "Employee View":
                 st.markdown(f"**{row['Title']}** ({row['Thrust_Area']})")
                 c1, c2, c3 = st.columns(3)
                 with c1: new_status = st.selectbox(f"Status", ["Not Started", "On Track", "Completed"], key=f"stat_{index}", index=["Not Started", "On Track", "Completed"].index(row['Status']))
-                with c2: new_act = st.number_input(f"Actual (Target: {row['Target']})", value=float(row['Q1_Actual']), key=f"act_{index}")
+                # Added min_value=0.0 to prevent negative actuals breaking the math
+                with c2: new_act = st.number_input(f"Actual (Target: {row['Target']})", min_value=0.0, value=float(row['Q1_Actual']), key=f"act_{index}")
                 with c3: 
                     calc_score = calculate_progress_score(row['UoM'], row['Target'], new_act)
                     st.metric("Computed Score", f"{calc_score:.1f}%")
                 
-                # Dynamic state updating tracking
                 if new_status != row['Status'] or new_act != row['Q1_Actual']:
                     st.session_state.goals_db.at[index, 'Status'] = new_status
                     st.session_state.goals_db.at[index, 'Q1_Actual'] = new_act
