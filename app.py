@@ -107,6 +107,21 @@ if current_user_role == "Employee View":
         clean_display_sheet = my_current_sheet[['Goal_ID', 'Thrust_Area', 'Title', 'UoM', 'Target', 'Weightage', 'Status', 'Approval']]
         st.dataframe(clean_display_sheet, use_container_width=True, hide_index=True)
         
+        # --- QUICK DELETE FEATURE ---
+        draft_goals = my_current_sheet[my_current_sheet['Approval'] == "Pending"]
+        if not draft_goals.empty:
+            st.markdown("🗑️ **Remove a Draft**")
+            del_c1, del_c2 = st.columns([3, 1])
+            with del_c1:
+                goal_to_remove = st.selectbox("Select goal to delete", draft_goals['Title'], label_visibility="collapsed")
+            with del_c2:
+                if st.button("Delete Goal", type="secondary"):
+                    st.session_state.goals_db = st.session_state.goals_db[st.session_state.goals_db['Title'] != goal_to_remove]
+                    st.toast(f"Removed: {goal_to_remove}", icon="🗑️")
+                    st.rerun()
+        
+        st.divider()
+        
         total_allocated_weight = my_current_sheet['Weightage'].sum()
         st.metric(label="Total Weightage Allocation", value=f"{total_allocated_weight}%")
         
@@ -158,15 +173,14 @@ elif current_user_role == "Manager View (L1)":
                             st.session_state.goals_db.at[index, 'Approval'] = "Approved"
                             st.session_state.goals_db.at[index, 'Comment'] = comment_text
                             st.toast("Goal locked and approved.", icon="🔒")
-                            st.rerun() # Instantly refreshes list state on click
+                            st.rerun() 
                     with col_btn2:
                         if st.button("Return for Rework", key=f"rej_{index}"):
                             st.session_state.goals_db.at[index, 'Approval'] = "Pending"
                             st.toast("Returned to employee.", icon="↩️")
-                            st.rerun() # Instantly refreshes list state on click
+                            st.rerun() 
 
     with mgr_tab2:
-        # Check-in queue shows active approved goals that still need feedback notes
         active_goals = st.session_state.goals_db[(st.session_state.goals_db['Approval'] == "Approved") & (st.session_state.goals_db['Comment'] == "")]
         if active_goals.empty: st.info("✨ Complete: All approved goals have been finalized with structured check-in notes.")
         else:
@@ -185,7 +199,7 @@ elif current_user_role == "Manager View (L1)":
                         else:
                             st.session_state.goals_db.at[index, 'Comment'] = checkin_comment
                             st.toast("Check-in logged and saved successfully.", icon="💾")
-                            st.rerun() # Forces the card to immediately drop off the pending feedback array list
+                            st.rerun() 
 
 # --- JOURNEY C: HR / ADMIN ENGINE ---
 else:
