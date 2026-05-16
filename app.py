@@ -244,9 +244,13 @@ else:
         c_m1, c_m2 = st.columns(2)
         with c_m1:
             fig1 = px.pie(st.session_state.goals_db, names='Thrust_Area', title='Goals by Thrust Area', hole=0.4) 
+            # FIX: Force transparent legend background
+            fig1.update_layout(legend=dict(bgcolor="rgba(0,0,0,0)"))
             st.plotly_chart(fig1, use_container_width=True)
         with c_m2:
             fig2 = px.histogram(st.session_state.goals_db, x='Status', color='Status', title='Status Distribution')
+            # FIX: Force transparent legend background
+            fig2.update_layout(legend=dict(bgcolor="rgba(0,0,0,0)"))
             st.plotly_chart(fig2, use_container_width=True)
             
     with hr_tab3:
