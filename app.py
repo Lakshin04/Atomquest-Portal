@@ -12,19 +12,19 @@ st.set_page_config(page_title="Atomberg Goal Portal", layout="wide")
 if 'goals_db' not in st.session_state:
     st.session_state.goals_db = pd.DataFrame([
         {
-            "Goal_ID": "G001", "Emp_Name": "Lakshin SK", "Role": "Employee",
+            "Goal_ID": "G001", "Emp_Name": "Lakshin", "Role": "Employee",
             "Thrust_Area": "Product Innovation", "Title": "Optimize Fan Motor Efficiency",
             "UoM": "Min (Numeric / %)", "Target": 95.0, "Weightage": 40.0,
             "Status": "On Track", "Approval": "Pending", "Q1_Actual": 92.0, "Comment": ""
         },
         {
-            "Goal_ID": "G002", "Emp_Name": "Lakshin SK", "Role": "Employee",
+            "Goal_ID": "G002", "Emp_Name": "Lakshin", "Role": "Employee",
             "Thrust_Area": "Operations", "Title": "Reduce Assembly Line Waste",
             "UoM": "Max (Numeric / %)", "Target": 5.0, "Weightage": 30.0,
             "Status": "Not Started", "Approval": "Pending", "Q1_Actual": 0.0, "Comment": ""
         },
         {
-            "Goal_ID": "G003", "Emp_Name": "Lakshin SK", "Role": "Employee",
+            "Goal_ID": "G003", "Emp_Name": "Lakshin", "Role": "Employee",
             "Thrust_Area": "Safety", "Title": "Zero Factory Incidents",
             "UoM": "Zero", "Target": 0.0, "Weightage": 30.0,
             "Status": "Completed", "Approval": "Pending", "Q1_Actual": 0.0, "Comment": ""
@@ -62,7 +62,7 @@ st.sidebar.markdown("---")
 # Quick User Switching Panel (Fulfills Submission Deliverable Requirement)
 current_user_role = st.sidebar.radio(
     "Select User Persona Journey:",
-    ["Employee View (Suriya SM)", "Manager View (L1)", "HR / Admin Dashboard"]
+    ["Employee View (Lakshin)", "Manager View (L1)", "HR / Admin Dashboard"]
 )
 
 st.sidebar.markdown("---")
@@ -73,7 +73,7 @@ st.sidebar.info("💡 Tip: Use this radio selector panel to test end-to-end mult
 # ----------------------------------------------------
 
 # --- JOURNEY A: EMPLOYEE INTERFACE ---
-if current_user_role == "Employee View (Suriya SM)":
+if current_user_role == "Employee View (Lakshin)":
     st.header("🎯 Employee Goal Management Workspace")
     
     tab1, tab2 = st.tabs(["Create & Submit Goal Sheets", "Quarterly Progress Logs"])
@@ -94,7 +94,7 @@ if current_user_role == "Employee View (Suriya SM)":
             
         # Phase 1 Validations Check Engine
         if st.button("Add Goal to Workspace Sheet"):
-            current_employee_goals = st.session_state.goals_db[st.session_state.goals_db['Emp_Name'] == "Suriya SM"]
+            current_employee_goals = st.session_state.goals_db[st.session_state.goals_db['Emp_Name'] == "Lakshin"]
             
             if len(current_employee_goals) >= 8:
                 st.error("⛔ System Exception: Maximum threshold reached. You cannot exceed 8 structural goals.")
@@ -107,7 +107,7 @@ if current_user_role == "Employee View (Suriya SM)":
             else:
                 # Append record to state-driven workspace ledger
                 new_row = {
-                    "Goal_ID": f"G00{len(st.session_state.goals_db)+1}", "Emp_Name": "Suriya SM", "Role": "Employee",
+                    "Goal_ID": f"G00{len(st.session_state.goals_db)+1}", "Emp_Name": "Lakshin", "Role": "Employee",
                     "Thrust_Area": thrust, "Title": title, "UoM": uom_type, "Target": target_val, "Weightage": weight,
                     "Status": "Not Started", "Approval": "Pending", "Q1_Actual": 0.0, "Comment": ""
                 }
@@ -116,7 +116,7 @@ if current_user_role == "Employee View (Suriya SM)":
 
         st.markdown("---")
         st.subheader("Your Current Session Workspace Ledger")
-        my_current_sheet = st.session_state.goals_db[st.session_state.goals_db['Emp_Name'] == "Suriya SM"]
+        my_current_sheet = st.session_state.goals_db[st.session_state.goals_db['Emp_Name'] == "Lakshin"]
         st.dataframe(my_current_sheet)
         
         # Display sum validation status check to user
@@ -125,14 +125,14 @@ if current_user_role == "Employee View (Suriya SM)":
         
         if total_allocated_weight == 100.0:
             if st.button("Submit Final Goal Sheet to L1 Manager", type="primary"):
-                st.session_state.goals_db.loc[st.session_state.goals_db['Emp_Name'] == "Suriya SM", "Approval"] = "Submitted"
+                st.session_state.goals_db.loc[st.session_state.goals_db['Emp_Name'] == "Lakshin", "Approval"] = "Submitted"
                 st.success("🚀 Sheet submitted securely. Controls locked pending manager verification.")
         else:
             st.warning(f"⚠️ Action Required: Total allocation balance is currently at {total_allocated_weight}%. Complete allocation to exactly 100% to activate submission routing.")
 
     with tab2:
         st.subheader("Quarterly Achievement & Update Log Windows")
-        editable_sheet = st.session_state.goals_db[st.session_state.goals_db['Emp_Name'] == "Suriya SM"]
+        editable_sheet = st.session_state.goals_db[st.session_state.goals_db['Emp_Name'] == "Lakshin"]
         
         # Interactive editing logs mapping
         for index, row in editable_sheet.iterrows():
