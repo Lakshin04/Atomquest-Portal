@@ -214,31 +214,28 @@ elif current_user_role == "Manager View (L1)":
 else:
     st.header("🛡️ HR Administration Control Center & Governance")
     
-    # Organizing the Admin view into clean tabs
-    hr_tab1, hr_tab2, hr_tab3 = st.tabs(["Completion Dashboard", "Organization Analytics", "Audit & Export Ledger"])
+    # We added a 4th tab for the Bonus Points Module
+    hr_tab1, hr_tab2, hr_tab3, hr_tab4 = st.tabs([
+        "Completion Dashboard", 
+        "Organization Analytics", 
+        "Audit & Export Ledger",
+        "⭐ Rule-Based Escalations"
+    ])
     
     with hr_tab1:
         st.subheader("Quarterly Check-in Completion Status (Q1)")
-        
-        # Logic: Checking how many goals have a Manager's comment attached
         total_goals = len(st.session_state.goals_db)
         completed_reviews = len(st.session_state.goals_db[st.session_state.goals_db['Comment'] != ""])
         
-        if total_goals > 0:
-            completion_rate = completed_reviews / total_goals
-        else:
-            completion_rate = 0.0
+        completion_rate = completed_reviews / total_goals if total_goals > 0 else 0.0
             
         st.progress(completion_rate)
         st.write(f"**Live Completion Rate:** {completed_reviews} out of {total_goals} goal check-ins finalized by managers.")
-        
-        # Displaying a simplified view of who is pending
         st.markdown("**Live Check-in Status Table:**")
         st.dataframe(st.session_state.goals_db[['Emp_Name', 'Title', 'Status', 'Approval', 'Comment']])
         
     with hr_tab2:
         st.subheader("Organization Progress Trends Overview")
-        # Building visual charts based on the live ledger
         c_m1, c_m2 = st.columns(2)
         with c_m1:
             fig1 = px.pie(st.session_state.goals_db, names='Thrust_Area', title='Goals by Strategic Thrust Area')
@@ -249,9 +246,7 @@ else:
             
     with hr_tab3:
         st.subheader("Global Achievement & Audit Records")
-        
         st.info("System Audit Trail: Active. Monitoring for post-lock modifications.")
-        # Simulating the Audit Log required by the BRD
         if len(st.session_state.audit_logs) > 0:
             for log in st.session_state.audit_logs:
                 st.code(log)
@@ -259,8 +254,6 @@ else:
             st.write("No critical modifications detected in this session.")
             
         st.markdown("---")
-        
-        # Export Engine Integration Component
         csv_buffer = st.session_state.goals_db.to_csv(index=False).encode('utf-8')
         st.download_button(
             label="📥 Export Master Achievement Report Data (CSV)",
@@ -268,3 +261,30 @@ else:
             file_name="Atomberg_Global_Performance_Master.csv",
             mime="text/csv"
         )
+        
+    with hr_tab4:
+        st.subheader("System Escalation Monitoring (Bonus Module)")
+        st.markdown("Active Rules Engine: Scanning for SLA breaches across the organization.")
+        
+        # The Demo Trick: A slider to let judges simulate the passage of time
+        st.info("💡 Interactive Demo: Use the slider below to simulate days passing since the cycle opened.")
+        days_elapsed = st.slider("Simulate Days Elapsed", 0, 30, 0)
+        
+        escalation_triggered = False
+        
+        # Scanning the DataFrame with logic loops
+        for index, row in st.session_state.goals_db.iterrows():
+            
+            # Rule 1: Employee Bottleneck (Hasn't submitted after 10 days)
+            if row['Approval'] == "Pending" and days_elapsed >= 10:
+                st.error(f"⚠️ **EMPLOYEE ESCALATION:** {row['Emp_Name']} has not finalized submission of '{row['Title']}'. (Overdue by {days_elapsed - 10} days)")
+                escalation_triggered = True
+                
+            # Rule 2: Manager Bottleneck (Sitting in queue for > 5 days)
+            # For demo purposes, we assume 'days_elapsed' applies to approval time as well
+            if row['Approval'] == "Submitted" and days_elapsed >= 5:
+                st.error(f"🚨 **MANAGER ESCALATION (L1):** Goal '{row['Title']}' from {row['Emp_Name']} is stuck in manager review queue. (Overdue by {days_elapsed - 5} days)")
+                escalation_triggered = True
+                
+        if not escalation_triggered:
+            st.success("✔️ All workflows are currently within acceptable SLAs. No escalations triggered.")
